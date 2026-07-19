@@ -61,7 +61,7 @@ router.post("/upload", upload.single("pdf"), async (req: Request, res: Response)
 });
 
 router.post("/:id/extract-characters", async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
   const script = db.prepare("SELECT * FROM scripts WHERE id = ?").get(id) as { id: string } | undefined;
   if (!script) return res.status(404).json({ error: "Not found" });
 
