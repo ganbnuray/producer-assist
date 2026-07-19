@@ -57,15 +57,20 @@ export async function generateCharacterVideo(
   imageUrl: string,
   characterName: string
 ): Promise<string> {
-  const fullImageUrl = imageUrl.startsWith("http")
-    ? imageUrl
-    : `${process.env.API_BASE_URL || "http://localhost:3001"}${imageUrl}`;
+  // Upload the local image file to Replicate so their servers can access it
+  const localImagePath = path.join(__dirname, "../../../data", imageUrl);
+  const imageBuffer = fs.readFileSync(localImagePath);
+  const uploadedFile = await replicate.files.create(
+    new Blob([imageBuffer], { type: "image/webp" }),
+    { filename: path.basename(localImagePath) }
+  );
+  const replicateImageUrl = (uploadedFile as unknown as { urls: { get: string } }).urls.get;
 
   const output = await replicate.run(
     "minimax/video-01-live:7574e16b8f1ad52c6332ecb264c0f132e555f46c222255a738131ec1bb614092",
     {
       input: {
-        first_frame_image: fullImageUrl,
+        first_frame_image: replicateImageUrl,
         prompt: `${characterName} portrait, subtle natural movement, gentle breathing, soft ambient light, cinematic`,
       },
     }
