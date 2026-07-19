@@ -29,10 +29,12 @@ export default function App() {
   } | null>(null);
   const [extracting, setExtracting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [loadingScript, setLoadingScript] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function loadScript(script: Script) {
+    setLoadingScript(true);
     setActiveScript(script);
     setScenes([]);
     setComments([]);
@@ -56,6 +58,7 @@ export default function App() {
       setCharacters(full);
       setActiveCharacterId(full[0].id);
     }
+    setLoadingScript(false);
   }
 
   useEffect(() => {
@@ -202,6 +205,7 @@ export default function App() {
               )}
             </div>
             <div className="screenplay">
+              {loadingScript && <p className="loading-hint">Loading…</p>}
               {scenes.map((scene) => (
                 <SceneBlock
                   key={scene.id}
