@@ -1,0 +1,9 @@
+{
+  "name": "sputo",
+  "private": true,
+  "scripts": {
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev -- --port 5173",
+    "install:all": "cd server && npm install && cd ../client && npm install"
+  }
+}
