@@ -95,7 +95,7 @@ export default function CharacterProfile({ character, currentUserId, onFieldUpda
       <div className="char-media">
         {character.video_url ? (
           <video
-            src={`http://localhost:3001${character.video_url}`}
+            src={character.video_url!}
             autoPlay
             loop
             muted
@@ -104,7 +104,7 @@ export default function CharacterProfile({ character, currentUserId, onFieldUpda
           />
         ) : character.image_url ? (
           <img
-            src={`http://localhost:3001${character.image_url}`}
+            src={character.image_url!}
             alt={character.name}
             className="char-image"
           />

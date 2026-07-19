@@ -122,7 +122,15 @@ export default function App() {
   );
 
   const activeCharacter = characters.find((c) => c.id === activeCharacterId) ?? null;
-  const conflictTexts = new Set<string>();
+
+  const [conflictTexts, setConflictTexts] = useState(new Set<string>());
+
+  useEffect(() => {
+    if (!activeCharacterId) return;
+    api.characters.conflicts(activeCharacterId).then((cs) => {
+      setConflictTexts(new Set(cs.map((c) => c.conflicting_text)));
+    }).catch(() => {});
+  }, [activeCharacterId]);
 
   return (
     <div className="app-layout">

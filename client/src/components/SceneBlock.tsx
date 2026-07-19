@@ -17,108 +17,72 @@ interface Segment {
 function parseTextContent(content: string): Segment[] {
   const segments: Segment[] = [];
   let remaining = content;
-
   const tagRe = /\[(CHARACTER|DIALOGUE|PARENTHETICAL|TRANSITION)\]([\s\S]*?)\[\/\1\]/;
 
   while (remaining.length > 0) {
     const match = tagRe.exec(remaining);
     if (!match) {
-      if (remaining.trim()) segments.push({ text: remaining, type: "action" });
+      if (remaining.trim()) segments.push({ text: remaining.trim(), type: "action" });
       break;
     }
-
     if (match.index > 0) {
-      const before = remaining.slice(0, match.index);
-      if (before.trim()) segments.push({ text: before, type: "action" });
+      const before = remaining.slice(0, match.index).trim();
+      if (before) segments.push({ text: before, type: "action" });
     }
-
-    const type = match[1].toLowerCase() as Segment["type"];
-    segments.push({ text: match[2], type });
+    segments.push({ text: match[2].trim(), type: match[1].toLowerCase() as Segment["type"] });
     remaining = remaining.slice(match.index + match[0].length);
   }
 
   return segments;
 }
 
-function buildHighlightedText(
-  plainText: string,
-  comments: Comment[],
-  sceneId: string,
-  activeCommentId: string | null,
-  conflictTexts: Set<string>
-): React.ReactNode[] {
-  interface Span {
-    start: number;
-    end: number;
-    commentId: string;
-    isActive: boolean;
-    note: string;
-    author: string;
-  }
+function applyHighlights(
+  text: string,
+  sceneComments: Comment[],
+  activeCommentId: string | null
+): React.ReactNode {
+  if (sceneComments.length === 0) return text;
 
-  const spans: Span[] = comments
-    .filter((c) => c.scene_id === sceneId)
-    .map((c) => ({
-      start: c.start_offset,
-      end: c.end_offset,
-      commentId: c.id,
-      isActive: c.id === activeCommentId,
-      note: c.note_text,
-      author: c.author_name,
-    }));
+  const parts: React.ReactNode[] = [];
+  let remaining = text;
+  let offset = 0;
 
-  if (spans.length === 0 && conflictTexts.size === 0) return [plainText];
+  for (const comment of sceneComments) {
+    const idx = remaining.indexOf(comment.highlighted_text);
+    if (idx === -1) continue;
 
-  const nodes: React.ReactNode[] = [];
-  let pos = 0;
-
-  const events: Array<{ pos: number; type: "open" | "close"; span: Span }> = [];
-  for (const span of spans) {
-    events.push({ pos: span.start, type: "open", span });
-    events.push({ pos: span.end, type: "close", span });
-  }
-  events.sort((a, b) => a.pos - b.pos || (a.type === "close" ? -1 : 1));
-
-  let key = 0;
-  for (const ev of events) {
-    if (ev.pos > pos) {
-      const slice = plainText.slice(pos, ev.pos);
-      nodes.push(slice);
-      pos = ev.pos;
+    if (idx > 0) {
+      parts.push(remaining.slice(0, idx));
     }
-    if (ev.type === "open") {
-      const highlighted = plainText.slice(ev.span.start, ev.span.end);
-      nodes.push(
-        <mark
-          key={key++}
-          className={`highlight ${ev.span.isActive ? "highlight-active" : ""}`}
-          title={`${ev.span.author}: ${ev.span.note}`}
-        >
-          {highlighted}
-        </mark>
-      );
-      pos = ev.span.end;
-    }
+
+    parts.push(
+      <mark
+        key={comment.id + offset}
+        className={`highlight${comment.id === activeCommentId ? " highlight-active" : ""}`}
+        title={`${comment.author_name}: ${comment.note_text}`}
+      >
+        {comment.highlighted_text}
+      </mark>
+    );
+
+    remaining = remaining.slice(idx + comment.highlighted_text.length);
+    offset += idx + comment.highlighted_text.length;
   }
 
-  if (pos < plainText.length) nodes.push(plainText.slice(pos));
-
-  return nodes;
-}
-
-function getPlainText(content: string): string {
-  return content.replace(/\[\/?(CHARACTER|DIALOGUE|PARENTHETICAL|TRANSITION)\]/g, "").replace(/\n/g, " ");
+  if (remaining) parts.push(remaining);
+  return parts.length > 0 ? <>{parts}</> : text;
 }
 
 export default function SceneBlock({ scene, comments, onTextSelect, activeCommentId, conflictTexts }: Props) {
   const segments = parseTextContent(scene.text_content);
+  const sceneComments = comments.filter((c) => c.scene_id === scene.id);
 
   function handleMouseUp(e: React.MouseEvent<HTMLDivElement>) {
     const selection = window.getSelection();
     if (!selection || selection.isCollapsed) return;
 
     const selected = selection.toString().trim();
-    if (!selected) return;
+    if (!selected || selected.length < 2) return;
 
     const container = e.currentTarget;
     const range = selection.getRangeAt(0);
@@ -128,57 +92,45 @@ export default function SceneBlock({ scene, comments, onTextSelect, activeCommen
     const start = preRange.toString().length;
     const end = start + selected.length;
 
+    selection.removeAllRanges();
     onTextSelect(scene, start, end, selected);
   }
 
-  function renderSegment(seg: Segment, segIdx: number): React.ReactNode {
-    const hasConflict = conflictTexts.has(seg.text.trim());
-    const sceneComments = comments.filter((c) => c.scene_id === scene.id);
-    const highlighted = buildHighlightedText(seg.text, sceneComments, scene.id, activeCommentId, conflictTexts);
+  function renderSegment(seg: Segment, idx: number): React.ReactNode {
+    const hasConflict = [...conflictTexts].some((ct) => seg.text.includes(ct));
+    const content = applyHighlights(seg.text, sceneComments, activeCommentId);
 
     switch (seg.type) {
       case "character":
-        return (
-          <p key={segIdx} className="sp-character">
-            {seg.text}
-          </p>
-        );
+        return <p key={idx} className="sp-character">{seg.text}</p>;
       case "dialogue":
         return (
-          <p key={segIdx} className={`sp-dialogue${hasConflict ? " conflict" : ""}`}>
-            {highlighted}
+          <p key={idx} className={`sp-dialogue${hasConflict ? " conflict" : ""}`}>
+            {content}
           </p>
         );
       case "parenthetical":
-        return (
-          <p key={segIdx} className="sp-parenthetical">
-            {seg.text}
-          </p>
-        );
+        return <p key={idx} className="sp-parenthetical">{seg.text}</p>;
       case "transition":
-        return (
-          <p key={segIdx} className="sp-transition">
-            {seg.text}
-          </p>
-        );
+        return <p key={idx} className="sp-transition">{seg.text}</p>;
       default:
         return (
-          <p key={segIdx} className={`sp-action${hasConflict ? " conflict" : ""}`}>
-            {highlighted}
+          <p key={idx} className={`sp-action${hasConflict ? " conflict" : ""}`}>
+            {content}
           </p>
         );
     }
   }
 
   return (
-    <div className="scene-block" id={`scene-${scene.id}`} onMouseUp={handleMouseUp}>
+    <div className="scene-block" id={`scene-${scene.id}`}>
       <h2 className="sp-heading">
         <span className="scene-num">{scene.scene_number}</span>
         {scene.heading}
       </h2>
-      {segments.map((seg, i) => renderSegment(seg, i))}
+      <div onMouseUp={handleMouseUp}>
+        {segments.map((seg, i) => renderSegment(seg, i))}
+      </div>
     </div>
   );
 }
-
-export { getPlainText };
