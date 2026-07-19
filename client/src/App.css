@@ -65,12 +65,13 @@ textarea:focus { outline: none; border-color: #999; }
   color: #1a1a1a;
   border: 1px solid #d0d0d0;
   border-radius: 6px;
-  padding: 5px 8px;
+  padding: 5px 28px 5px 10px;
   font-size: 13px;
   font-family: inherit;
   cursor: pointer;
   min-width: 180px;
   max-width: 300px;
+  appearance: auto;
 }
 .script-select:focus { outline: none; border-color: #999; }
 
