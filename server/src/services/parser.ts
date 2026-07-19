@@ -10,14 +10,18 @@ export interface ParsedScene {
 
 type Context = "action" | "character" | "dialogue";
 
-const HEADING_RE = /^(INT\.|EXT\.|INT\/EXT\.|I\/E\.)/i;
-const TRAILING_NUM_RE = /^(.*?)\s*(\d+)\s*$/;
+const SLUG_RE = /INT\.|EXT\.|INT\/EXT\.|I\/E\./i;
+// Heading with leading scene number: "1 INT. FOO - DAY" or "1A EXT. BAR - NIGHT"
+const LEADING_NUM_RE = /^(\d+[A-Z]?)\s+(INT\.|EXT\.|INT\/EXT\.|I\/E\.)/i;
+// Heading with trailing scene number: "EXT. FOO - DAY12"
+const TRAILING_NUM_RE = /^(.*?)\s*(\d+[A-Z]?)\s*$/;
 const CHARACTER_RE = /^[A-Z][A-Z0-9\s\-\.']+(\s*\([^)]+\))?$/;
 const PARENTHETICAL_RE = /^\(.*\)$/;
 const PAGE_NUM_RE = /^\d+\.$/;
 
 function isHeading(line: string): boolean {
-  return HEADING_RE.test(line.trim());
+  const t = line.trim();
+  return LEADING_NUM_RE.test(t) || SLUG_RE.test(t);
 }
 
 function isCharacter(line: string): boolean {
@@ -30,14 +34,24 @@ function isCharacter(line: string): boolean {
 
 function extractSceneNumber(headingLine: string): { sceneNumber: string; heading: string } {
   const trimmed = headingLine.trim();
-  const m = trimmed.match(TRAILING_NUM_RE);
-  if (m) {
-    const possibleNum = m[2];
-    const possibleHeading = m[1].trim();
-    if (HEADING_RE.test(possibleHeading)) {
-      return { sceneNumber: possibleNum, heading: possibleHeading };
+
+  // Format: "1 INT. FOO - DAY" — leading number
+  const leadMatch = trimmed.match(LEADING_NUM_RE);
+  if (leadMatch) {
+    const sceneNumber = leadMatch[1];
+    const heading = trimmed.slice(leadMatch[0].indexOf(leadMatch[2])).trim();
+    return { sceneNumber, heading };
+  }
+
+  // Format: "EXT. FOO - DAY1" — trailing number
+  const trailMatch = trimmed.match(TRAILING_NUM_RE);
+  if (trailMatch) {
+    const possibleHeading = trailMatch[1].trim();
+    if (SLUG_RE.test(possibleHeading)) {
+      return { sceneNumber: trailMatch[2], heading: possibleHeading };
     }
   }
+
   return { sceneNumber: "?", heading: trimmed };
 }
 
