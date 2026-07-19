@@ -58,18 +58,21 @@ textarea:focus { outline: none; border-color: #999; }
   margin-right: 8px;
 }
 
-.header-scripts { display: flex; align-items: center; gap: 6px; flex: 1; overflow-x: auto; }
+.header-scripts { display: flex; align-items: center; gap: 8px; }
 
-.script-tab {
-  background: transparent;
+.script-select {
+  background: #fff;
+  color: #1a1a1a;
   border: 1px solid #d0d0d0;
-  color: #666;
   border-radius: 6px;
-  white-space: nowrap;
-  font-size: 12px;
+  padding: 5px 8px;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  min-width: 180px;
+  max-width: 300px;
 }
-.script-tab.active { background: #1a1a1a; border-color: #1a1a1a; color: #fff; }
-.script-tab:hover:not(.active) { background: #f0f0f0; color: #333; }
+.script-select:focus { outline: none; border-color: #999; }
 
 .btn-upload {
   background: transparent;

@@ -141,15 +141,20 @@ export default function App() {
         <span className="logo">Sputo</span>
 
         <div className="header-scripts">
-          {scripts.map((s) => (
-            <button
-              key={s.id}
-              className={`script-tab${activeScript?.id === s.id ? " active" : ""}`}
-              onClick={() => loadScript(s)}
+          {scripts.length > 0 && (
+            <select
+              className="script-select"
+              value={activeScript?.id ?? ""}
+              onChange={(e) => {
+                const s = scripts.find((s) => s.id === e.target.value);
+                if (s) loadScript(s);
+              }}
             >
-              {s.title}
-            </button>
-          ))}
+              {scripts.map((s) => (
+                <option key={s.id} value={s.id}>{s.title}</option>
+              ))}
+            </select>
+          )}
           <button
             className="btn-upload"
             onClick={() => fileInputRef.current?.click()}
