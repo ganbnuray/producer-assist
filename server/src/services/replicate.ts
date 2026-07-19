@@ -61,16 +61,15 @@ export async function generateCharacterVideo(
     ? imageUrl
     : `${process.env.API_BASE_URL || "http://localhost:3001"}${imageUrl}`;
 
-  const output = await replicate.run("stability-ai/stable-video-diffusion", {
-    input: {
-      input_image: fullImageUrl,
-      video_length: "25_frames_with_svd_xt",
-      sizing_strategy: "maintain_aspect_ratio",
-      frames_per_second: 6,
-      motion_bucket_id: 40,
-      cond_aug: 0.02,
-    },
-  });
+  const output = await replicate.run(
+    "minimax/video-01-live:7574e16b8f1ad52c6332ecb264c0f132e555f46c222255a738131ec1bb614092",
+    {
+      input: {
+        first_frame_image: fullImageUrl,
+        prompt: `${characterName} portrait, subtle natural movement, gentle breathing, soft ambient light, cinematic`,
+      },
+    }
+  );
 
   const videoUrl = Array.isArray(output) ? output[0] : (output as string);
   const filename = `char-video-${Date.now()}.mp4`;
