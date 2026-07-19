@@ -100,6 +100,7 @@ export const api = {
     },
     extractCharacters: (id: string) =>
       request<Array<{ id: string; name: string }>>(`/scripts/${id}/extract-characters`, { method: "POST" }),
+    delete: (id: string) => request<void>(`/scripts/${id}`, { method: "DELETE" }),
   },
   scenes: {
     forScript: (scriptId: string) => request<Scene[]>(`/scenes/script/${scriptId}`),

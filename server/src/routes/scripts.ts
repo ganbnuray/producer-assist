@@ -114,4 +114,11 @@ router.post("/:id/extract-characters", async (req: Request, res: Response) => {
   }
 });
 
+router.delete("/:id", (req: Request, res: Response) => {
+  const script = db.prepare("SELECT * FROM scripts WHERE id = ?").get(req.params.id);
+  if (!script) return res.status(404).json({ error: "Not found" });
+  db.prepare("DELETE FROM scripts WHERE id = ?").run(req.params.id);
+  res.status(204).end();
+});
+
 export default router;

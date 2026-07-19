@@ -142,18 +142,41 @@ export default function App() {
 
         <div className="header-scripts">
           {scripts.length > 0 && (
-            <select
-              className="script-select"
-              value={activeScript?.id ?? ""}
-              onChange={(e) => {
-                const s = scripts.find((s) => s.id === e.target.value);
-                if (s) loadScript(s);
-              }}
-            >
-              {scripts.map((s) => (
-                <option key={s.id} value={s.id}>{s.title}</option>
-              ))}
-            </select>
+            <>
+              <select
+                className="script-select"
+                value={activeScript?.id ?? ""}
+                onChange={(e) => {
+                  const s = scripts.find((s) => s.id === e.target.value);
+                  if (s) loadScript(s);
+                }}
+              >
+                {scripts.map((s) => (
+                  <option key={s.id} value={s.id}>{s.title}</option>
+                ))}
+              </select>
+              <button
+                className="btn-delete-script"
+                title="Delete this script"
+                onClick={async () => {
+                  if (!activeScript) return;
+                  if (!confirm(`Delete "${activeScript.title}"?`)) return;
+                  await api.scripts.delete(activeScript.id);
+                  const updated = await api.scripts.list();
+                  setScripts(updated);
+                  if (updated.length > 0) loadScript(updated[0]);
+                  else {
+                    setActiveScript(null);
+                    setScenes([]);
+                    setComments([]);
+                    setCharacters([]);
+                    setEditLogs([]);
+                  }
+                }}
+              >
+                Delete
+              </button>
+            </>
           )}
           <button
             className="btn-upload"

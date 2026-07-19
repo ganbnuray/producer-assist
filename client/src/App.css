@@ -75,6 +75,16 @@ textarea:focus { outline: none; border-color: #999; }
 }
 .script-select:focus { outline: none; border-color: #999; }
 
+.btn-delete-script {
+  background: transparent;
+  border: 1px solid #d0d0d0;
+  color: #999;
+  font-size: 12px;
+  padding: 5px 10px;
+  border-radius: 6px;
+}
+.btn-delete-script:hover { background: #f5f5f5; color: #333; border-color: #bbb; }
+
 .btn-upload {
   background: transparent;
   border: 1px solid #d0d0d0;
