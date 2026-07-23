@@ -45,7 +45,7 @@ export async function generateCharacterImage(
     },
   });
 
-  const imageUrl = Array.isArray(output) ? output[0] : (output as string);
+  const imageUrl = Array.isArray(output) ? output[0] : (output as unknown as string);
   const filename = `char-${Date.now()}.webp`;
   const localPath = path.join(UPLOADS_DIR, filename);
   await downloadFile(String(imageUrl), localPath);
@@ -76,7 +76,7 @@ export async function generateCharacterVideo(
     }
   );
 
-  const videoUrl = Array.isArray(output) ? output[0] : (output as string);
+  const videoUrl = Array.isArray(output) ? output[0] : (output as unknown as string);
   const filename = `char-video-${Date.now()}.mp4`;
   const localPath = path.join(UPLOADS_DIR, filename);
   await downloadFile(String(videoUrl), localPath);
